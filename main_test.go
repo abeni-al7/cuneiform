@@ -73,3 +73,30 @@ func TestRun_ReadableFile_UsesPlaceholderValidationBehavior(t *testing.T) {
 		t.Fatalf("expected placeholder validation message, got %q", stderr.String())
 	}
 }
+
+func TestRun_Step1Fixtures_ValidSucceedsInvalidFails(t *testing.T) {
+	t.Parallel()
+
+	validPath := filepath.Join("tests", "step1", "valid.json")
+	invalidPath := filepath.Join("tests", "step1", "invalid.json")
+
+	t.Run("valid fixture succeeds", func(t *testing.T) {
+		var stderr bytes.Buffer
+
+		exitCode := run([]string{validPath}, &stderr)
+
+		if exitCode != 0 {
+			t.Fatalf("expected exit code 0 for %s, got %d with stderr %q", validPath, exitCode, stderr.String())
+		}
+	})
+
+	t.Run("invalid fixture fails", func(t *testing.T) {
+		var stderr bytes.Buffer
+
+		exitCode := run([]string{invalidPath}, &stderr)
+
+		if exitCode != 1 {
+			t.Fatalf("expected exit code 1 for %s, got %d with stderr %q", invalidPath, exitCode, stderr.String())
+		}
+	})
+}
