@@ -53,7 +53,7 @@ func TestRun_MissingFile_ExitsOne(t *testing.T) {
 	}
 }
 
-func TestRun_ReadableFile_UsesPlaceholderValidationBehavior(t *testing.T) {
+func TestRun_ReadableValidFile_ExitsZero(t *testing.T) {
 	t.Parallel()
 
 	tempDir := t.TempDir()
@@ -65,12 +65,8 @@ func TestRun_ReadableFile_UsesPlaceholderValidationBehavior(t *testing.T) {
 	var stderr bytes.Buffer
 	exitCode := run([]string{path}, &stderr)
 
-	if exitCode != 1 {
-		t.Fatalf("expected placeholder exit code 1, got %d", exitCode)
-	}
-
-	if !strings.Contains(stderr.String(), "validation is not implemented") {
-		t.Fatalf("expected placeholder validation message, got %q", stderr.String())
+	if exitCode != 0 {
+		t.Fatalf("expected exit code 0, got %d with stderr %q", exitCode, stderr.String())
 	}
 }
 

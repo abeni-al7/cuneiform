@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/abeni-al7/cuneiform/lexer"
+	"github.com/abeni-al7/cuneiform/parser"
 )
 
 func main() {
@@ -36,6 +39,14 @@ func run(args []string, stderr io.Writer) int {
 	return 0
 }
 
-func validatePlaceholder(_ []byte) error {
-	return fmt.Errorf("validation is not implemented yet")
+func validatePlaceholder(data []byte) error {
+	l := lexer.NewLexer(data)
+	p := parser.NewParser(l)
+
+	_, err := p.Parse()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

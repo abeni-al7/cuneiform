@@ -22,14 +22,22 @@ func NewLexer(input []byte) *Lexer {
 func (l *Lexer) NextToken() Token {
 	l.skipWhitespace()
 
-	if l.ch == 0 {
+	switch l.ch {
+	case 0:
 		return NewToken(EOF, "")
+	case '{':
+		tok := NewToken(LBRACE, string(l.ch))
+		l.readChar()
+		return tok
+	case '}':
+		tok := NewToken(RBRACE, string(l.ch))
+		l.readChar()
+		return tok
+	default:
+		tok := NewToken(ILLEGAL, string(l.ch))
+		l.readChar()
+		return tok
 	}
-
-	// TODO: Replace placeholder tokenization with full JSON lexing logic.
-	tok := NewToken(ILLEGAL, string(l.ch))
-	l.readChar()
-	return tok
 }
 
 func (l *Lexer) readChar() {

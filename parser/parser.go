@@ -21,7 +21,18 @@ func NewParser(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) Parse() (Value, error) {
-	return p.ParseValue()
+	value, err := p.ParseValue()
+	if err != nil {
+		return nil, err
+	}
+
+	if !p.peekTokenIs(lexer.EOF) {
+		err := fmt.Errorf("expected end of input, got %q", p.peekToken.Type)
+		p.errors = append(p.errors, err)
+		return nil, err
+	}
+
+	return value, nil
 }
 
 func (p *Parser) ParseValue() (Value, error) {
@@ -76,7 +87,11 @@ func (p *Parser) expectPeek(tokenType lexer.TokenType) bool {
 }
 
 func (p *Parser) parseObject() (Value, error) {
-	return nil, p.todo("parseObject")
+	if !p.expectPeek(lexer.RBRACE) {
+		return nil, p.errors[len(p.errors)-1]
+	}
+
+	return &ObjectNode{Fields: []ObjectField{}}, nil
 }
 
 func (p *Parser) parseArray() (Value, error) {
