@@ -6,15 +6,19 @@ import (
 	"github.com/abeni-al7/cuneiform/lexer"
 )
 
+const defaultMaxNestingDepth = 19
+
 type Parser struct {
 	l         *lexer.Lexer
 	curToken  lexer.Token
 	peekToken lexer.Token
 	errors    []error
+	depth     int
+	maxDepth  int
 }
 
 func NewParser(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{l: l, maxDepth: defaultMaxNestingDepth}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -92,7 +96,29 @@ func (p *Parser) expectPeek(tokenType lexer.TokenType) bool {
 	return false
 }
 
+func (p *Parser) enterComposite(kind string) error {
+	p.depth++
+	if p.depth > p.maxDepth {
+		err := fmt.Errorf("maximum nesting depth exceeded while parsing %s: depth %d, max %d", kind, p.depth, p.maxDepth)
+		p.errors = append(p.errors, err)
+		return err
+	}
+
+	return nil
+}
+
+func (p *Parser) leaveComposite() {
+	if p.depth > 0 {
+		p.depth--
+	}
+}
+
 func (p *Parser) parseObject() (Value, error) {
+	if err := p.enterComposite("object"); err != nil {
+		return nil, err
+	}
+	defer p.leaveComposite()
+
 	obj := &ObjectNode{Fields: []ObjectField{}}
 
 	if p.peekTokenIs(lexer.RBRACE) {
@@ -149,6 +175,11 @@ func (p *Parser) parseObject() (Value, error) {
 }
 
 func (p *Parser) parseArray() (Value, error) {
+	if err := p.enterComposite("array"); err != nil {
+		return nil, err
+	}
+	defer p.leaveComposite()
+
 	arr := &ArrayNode{Elements: []Value{}}
 
 	if p.peekTokenIs(lexer.RBRACKET) {
