@@ -21,6 +21,12 @@ func NewParser(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) Parse() (Value, error) {
+	if !p.curTokenIs(lexer.LBRACE) && !p.curTokenIs(lexer.LBRACKET) {
+		err := fmt.Errorf("expected top-level JSON object or array, got %q", p.curToken.Type)
+		p.errors = append(p.errors, err)
+		return nil, err
+	}
+
 	value, err := p.ParseValue()
 	if err != nil {
 		return nil, err
