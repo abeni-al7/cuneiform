@@ -87,11 +87,59 @@ func (p *Parser) expectPeek(tokenType lexer.TokenType) bool {
 }
 
 func (p *Parser) parseObject() (Value, error) {
-	if !p.expectPeek(lexer.RBRACE) {
-		return nil, p.errors[len(p.errors)-1]
+	obj := &ObjectNode{Fields: []ObjectField{}}
+
+	if p.peekTokenIs(lexer.RBRACE) {
+		p.nextToken()
+		return obj, nil
 	}
 
-	return &ObjectNode{Fields: []ObjectField{}}, nil
+	for {
+		p.nextToken()
+		if !p.curTokenIs(lexer.STRING) {
+			err := fmt.Errorf("expected object key string, got %q", p.curToken.Type)
+			p.errors = append(p.errors, err)
+			return nil, err
+		}
+
+		keyValue, err := p.parseString()
+		if err != nil {
+			return nil, err
+		}
+
+		key, ok := keyValue.(*StringNode)
+		if !ok {
+			err := fmt.Errorf("expected object key node to be string")
+			p.errors = append(p.errors, err)
+			return nil, err
+		}
+
+		if !p.expectPeek(lexer.COLON) {
+			return nil, p.errors[len(p.errors)-1]
+		}
+
+		p.nextToken()
+		value, err := p.ParseValue()
+		if err != nil {
+			return nil, err
+		}
+
+		obj.Fields = append(obj.Fields, ObjectField{Key: key, Value: value})
+
+		if p.peekTokenIs(lexer.COMMA) {
+			p.nextToken()
+			continue
+		}
+
+		if p.peekTokenIs(lexer.RBRACE) {
+			p.nextToken()
+			return obj, nil
+		}
+
+		err = fmt.Errorf("expected next token %q or %q, got %q", lexer.COMMA, lexer.RBRACE, p.peekToken.Type)
+		p.errors = append(p.errors, err)
+		return nil, err
+	}
 }
 
 func (p *Parser) parseArray() (Value, error) {
@@ -99,7 +147,7 @@ func (p *Parser) parseArray() (Value, error) {
 }
 
 func (p *Parser) parseString() (Value, error) {
-	return nil, p.todo("parseString")
+	return &StringNode{Value: p.curToken.Literal}, nil
 }
 
 func (p *Parser) parseNumber() (Value, error) {

@@ -96,3 +96,37 @@ func TestRun_Step1Fixtures_ValidSucceedsInvalidFails(t *testing.T) {
 		}
 	})
 }
+
+func TestRun_Step2Fixtures_ValidPassesInvalidErrors(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		path      string
+		wantCode  int
+		wantError bool
+	}{
+		{name: "valid", path: filepath.Join("tests", "step2", "valid.json"), wantCode: 0, wantError: false},
+		{name: "valid2", path: filepath.Join("tests", "step2", "valid2.json"), wantCode: 0, wantError: false},
+		{name: "invalid", path: filepath.Join("tests", "step2", "invalid.json"), wantCode: 1, wantError: true},
+		{name: "invalid2", path: filepath.Join("tests", "step2", "invalid2.json"), wantCode: 1, wantError: true},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			var stderr bytes.Buffer
+
+			exitCode := run([]string{tc.path}, &stderr)
+
+			if exitCode != tc.wantCode {
+				t.Fatalf("expected exit code %d for %s, got %d with stderr %q", tc.wantCode, tc.path, exitCode, stderr.String())
+			}
+
+			hasErrorOutput := strings.TrimSpace(stderr.String()) != ""
+			if hasErrorOutput != tc.wantError {
+				t.Fatalf("expected error output=%t for %s, got %t with stderr %q", tc.wantError, tc.path, hasErrorOutput, stderr.String())
+			}
+		})
+	}
+}

@@ -33,6 +33,21 @@ func (l *Lexer) NextToken() Token {
 		tok := NewToken(RBRACE, string(l.ch))
 		l.readChar()
 		return tok
+	case ':':
+		tok := NewToken(COLON, string(l.ch))
+		l.readChar()
+		return tok
+	case ',':
+		tok := NewToken(COMMA, string(l.ch))
+		l.readChar()
+		return tok
+	case '"':
+		literal, terminated := l.readString()
+		if !terminated {
+			return NewToken(ILLEGAL, literal)
+		}
+
+		return NewToken(STRING, literal)
 	default:
 		tok := NewToken(ILLEGAL, string(l.ch))
 		l.readChar()
@@ -74,9 +89,24 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l *Lexer) readString() string {
-	// TODO: Implement escaped-string handling and termination checks.
-	return ""
+func (l *Lexer) readString() (string, bool) {
+	// Skip opening quote.
+	l.readChar()
+	start := l.position
+
+	for l.ch != '"' && l.ch != 0 {
+		l.readChar()
+	}
+
+	if l.ch == 0 {
+		return string(l.input[start:l.position]), false
+	}
+
+	literal := string(l.input[start:l.position])
+	// Advance past closing quote.
+	l.readChar()
+
+	return literal, true
 }
 
 func (l *Lexer) readNumber() string {
