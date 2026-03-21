@@ -48,6 +48,14 @@ func (l *Lexer) NextToken() Token {
 	switch l.ch {
 	case 0:
 		return NewToken(EOF, "")
+	case '[':
+		tok := NewToken(LBRACKET, string(l.ch))
+		l.readChar()
+		return tok
+	case ']':
+		tok := NewToken(RBRACKET, string(l.ch))
+		l.readChar()
+		return tok
 	case '{':
 		tok := NewToken(LBRACE, string(l.ch))
 		l.readChar()

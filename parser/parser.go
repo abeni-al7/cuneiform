@@ -143,7 +143,36 @@ func (p *Parser) parseObject() (Value, error) {
 }
 
 func (p *Parser) parseArray() (Value, error) {
-	return nil, p.todo("parseArray")
+	arr := &ArrayNode{Elements: []Value{}}
+
+	if p.peekTokenIs(lexer.RBRACKET) {
+		p.nextToken()
+		return arr, nil
+	}
+
+	for {
+		p.nextToken()
+		element, err := p.ParseValue()
+		if err != nil {
+			return nil, err
+		}
+
+		arr.Elements = append(arr.Elements, element)
+
+		if p.peekTokenIs(lexer.COMMA) {
+			p.nextToken()
+			continue
+		}
+
+		if p.peekTokenIs(lexer.RBRACKET) {
+			p.nextToken()
+			return arr, nil
+		}
+
+		err = fmt.Errorf("expected next token %q or %q, got %q", lexer.COMMA, lexer.RBRACKET, p.peekToken.Type)
+		p.errors = append(p.errors, err)
+		return nil, err
+	}
 }
 
 func (p *Parser) parseString() (Value, error) {
