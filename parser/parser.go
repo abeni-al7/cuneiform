@@ -151,15 +151,15 @@ func (p *Parser) parseString() (Value, error) {
 }
 
 func (p *Parser) parseNumber() (Value, error) {
-	return nil, p.todo("parseNumber")
+	return &NumberNode{Raw: p.curToken.Literal}, nil
 }
 
 func (p *Parser) parseBoolean() (Value, error) {
-	return nil, p.todo("parseBoolean")
+	return &BooleanNode{Value: p.curTokenIs(lexer.TRUE)}, nil
 }
 
 func (p *Parser) parseNull() (Value, error) {
-	return nil, p.todo("parseNull")
+	return &NullNode{}, nil
 }
 
 func (p *Parser) todo(area string) error {

@@ -22,6 +22,29 @@ func NewLexer(input []byte) *Lexer {
 func (l *Lexer) NextToken() Token {
 	l.skipWhitespace()
 
+	if isLetter(l.ch) {
+		literal := l.readIdentifierOrKeyword()
+		switch literal {
+		case "true":
+			return NewToken(TRUE, literal)
+		case "false":
+			return NewToken(FALSE, literal)
+		case "null":
+			return NewToken(NULL, literal)
+		default:
+			return NewToken(ILLEGAL, literal)
+		}
+	}
+
+	if l.ch == '-' || isDigit(l.ch) {
+		literal, ok := l.readNumber()
+		if !ok {
+			return NewToken(ILLEGAL, literal)
+		}
+
+		return NewToken(NUMBER, literal)
+	}
+
 	switch l.ch {
 	case 0:
 		return NewToken(EOF, "")
@@ -109,12 +132,77 @@ func (l *Lexer) readString() (string, bool) {
 	return literal, true
 }
 
-func (l *Lexer) readNumber() string {
-	// TODO: Implement integer, fraction, and exponent number lexing.
-	return ""
+func (l *Lexer) readNumber() (string, bool) {
+	start := l.position
+
+	if l.ch == '-' {
+		l.readChar()
+		if !isDigit(l.ch) {
+			return string(l.input[start:l.position]), false
+		}
+	}
+
+	if l.ch == '0' {
+		l.readChar()
+		if isDigit(l.ch) {
+			for isDigit(l.ch) {
+				l.readChar()
+			}
+			return string(l.input[start:l.position]), false
+		}
+	} else {
+		if !isDigit(l.ch) {
+			return string(l.input[start:l.position]), false
+		}
+
+		for isDigit(l.ch) {
+			l.readChar()
+		}
+	}
+
+	if l.ch == '.' {
+		l.readChar()
+		if !isDigit(l.ch) {
+			return string(l.input[start:l.position]), false
+		}
+
+		for isDigit(l.ch) {
+			l.readChar()
+		}
+	}
+
+	if l.ch == 'e' || l.ch == 'E' {
+		l.readChar()
+		if l.ch == '+' || l.ch == '-' {
+			l.readChar()
+		}
+
+		if !isDigit(l.ch) {
+			return string(l.input[start:l.position]), false
+		}
+
+		for isDigit(l.ch) {
+			l.readChar()
+		}
+	}
+
+	return string(l.input[start:l.position]), true
 }
 
 func (l *Lexer) readIdentifierOrKeyword() string {
-	// TODO: Implement scanning for true/false/null keywords.
-	return ""
+	start := l.position
+
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+
+	return string(l.input[start:l.position])
+}
+
+func isDigit(ch byte) bool {
+	return ch >= '0' && ch <= '9'
+}
+
+func isLetter(ch byte) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
 }
