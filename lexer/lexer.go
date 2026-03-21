@@ -125,19 +125,37 @@ func (l *Lexer) readString() (string, bool) {
 	l.readChar()
 	start := l.position
 
-	for l.ch != '"' && l.ch != 0 {
+	for {
+		switch l.ch {
+		case 0:
+			return string(l.input[start:l.position]), false
+		case '"':
+			literal := string(l.input[start:l.position])
+			// Advance past closing quote.
+			l.readChar()
+			return literal, true
+		case '\\':
+			l.readChar()
+			if !isValidEscapeChar(l.ch) {
+				return string(l.input[start:l.position]), false
+			}
+
+			if l.ch == 'u' {
+				for i := 0; i < 4; i++ {
+					l.readChar()
+					if !isHexDigit(l.ch) {
+						return string(l.input[start:l.position]), false
+					}
+				}
+			}
+		default:
+			if l.ch < 0x20 {
+				return string(l.input[start:l.position]), false
+			}
+		}
+
 		l.readChar()
 	}
-
-	if l.ch == 0 {
-		return string(l.input[start:l.position]), false
-	}
-
-	literal := string(l.input[start:l.position])
-	// Advance past closing quote.
-	l.readChar()
-
-	return literal, true
 }
 
 func (l *Lexer) readNumber() (string, bool) {
@@ -213,4 +231,17 @@ func isDigit(ch byte) bool {
 
 func isLetter(ch byte) bool {
 	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
+func isHexDigit(ch byte) bool {
+	return isDigit(ch) || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F')
+}
+
+func isValidEscapeChar(ch byte) bool {
+	switch ch {
+	case '"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u':
+		return true
+	default:
+		return false
+	}
 }
