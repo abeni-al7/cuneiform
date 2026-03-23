@@ -108,7 +108,7 @@ Error strategy:
 
 ```mermaid
 flowchart TD
-	P0[Parse] --> P1{Top-level token is { or [?}
+	P0[Parse] --> P1{Top-level token is object or array}
 	P1 -->|No| PErr1[Return top-level error]
 	P1 -->|Yes| PV[ParseValue]
 
